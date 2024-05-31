@@ -1,112 +1,95 @@
 'use strict';
 
 import './popup.css';
+import './additional.css';
+import { RequestToContentScript, RequestType, ParseQuery } from './helper';
 
-(function () {
-  // We will make use of Storage API to get and store `count` value
-  // More information on Storage API can we found at
-  // https://developer.chrome.com/extensions/storage
+RequestToContentScript(RequestType.CurrentQuery);
 
-  // To get storage access, we have to mention it in `permissions` property of manifest.json file
-  // More information on Permissions can we found at
-  // https://developer.chrome.com/extensions/declare_permissions
-  const counterStorage = {
-    get: (cb: (count: number) => void) => {
-      chrome.storage.sync.get(['count'], (result) => {
-        cb(result.count);
-      });
-    },
-    set: (value: number, cb: () => void) => {
-      chrome.storage.sync.set(
-        {
-          count: value,
-        },
-        () => {
-          cb();
-        }
-      );
-    },
-  };
+const makeUI = (label: string): HTMLElement => {
+  const d = document.createElement('div');
+  const l = document.createElement('label');
+  l.innerText = label;
+  const c = document.createElement('input');
+  c.type = 'checkbox';
+  c.className = 'cbox';
+  c.value = label;
+  c.checked = true;
+  l.append(c);
+  d.append(l);
+  return d;
+};
 
-  function setupCounter(initialValue = 0) {
-    document.getElementById('counter')!.innerHTML = initialValue.toString();
+const hidePlaceholder = () => {
+  document.getElementById('placeholder')!.style.display = 'none';
+};
 
-    document.getElementById('incrementBtn')!.addEventListener('click', () => {
-      updateCounter({
-        type: 'INCREMENT',
-      });
-    });
+const showContent = () => {
+  hidePlaceholder();
+  document.getElementById('app')!.style.display = 'inherit';
+};
 
-    document.getElementById('decrementBtn')!.addEventListener('click', () => {
-      updateCounter({
-        type: 'DECREMENT',
-      });
+chrome.runtime.onMessage.addListener((request) => {
+  if (!request.type || !request.payload) {
+    return;
+  }
+  if (request.type === RequestType.CurrentQuery) {
+    showContent();
+    ParseQuery(request.payload).forEach((s: string) => {
+      document.getElementById('words')!.append(makeUI(s));
     });
   }
+});
 
-  function updateCounter({ type }: { type: string }) {
-    counterStorage.get((count: number) => {
-      let newCount: number;
-
-      if (type === 'INCREMENT') {
-        newCount = count + 1;
-      } else if (type === 'DECREMENT') {
-        newCount = count - 1;
-      } else {
-        newCount = count;
-      }
-
-      counterStorage.set(newCount, () => {
-        document.getElementById('counter')!.innerHTML = newCount.toString();
-
-        // Communicate with content script of
-        // active tab by sending a message
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const tab = tabs[0];
-
-          chrome.tabs.sendMessage(
-            tab.id!,
-            {
-              type: 'COUNT',
-              payload: {
-                count: newCount,
-              },
-            },
-            (response) => {
-              console.log('Current count value passed to contentScript file');
-            }
-          );
-        });
-      });
-    });
-  }
-
-  function restoreCounter() {
-    // Restore count value
-    counterStorage.get((count: number) => {
-      if (typeof count === 'undefined') {
-        // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', restoreCounter);
-
-  // Communicate with background file by sending a message
-  chrome.runtime.sendMessage(
-    {
-      type: 'GREETINGS',
-      payload: {
-        message: 'Hello, my name is Pop. I am from Popup.',
-      },
-    },
-    (response) => {
-      console.log(response.message);
-    }
+const getCheckBoxes = (): HTMLInputElement[] => {
+  return Array.from(document.getElementsByTagName('input')).filter(
+    (elem) => elem.type === 'checkbox'
   );
-})();
+};
+
+const search = (qs: string[]) => {
+  const q = encodeURIComponent(qs.join(' '));
+  const to = 'http://www.google.com/search?q=' + q;
+  window.open(to, '_blank');
+};
+
+const reSearch = () => {
+  const qs = getCheckBoxes().map((elem) => {
+    const s = elem.value;
+    if (elem.checked) {
+      return `"${s}"`;
+    }
+    return s;
+  });
+  search(qs);
+};
+
+document.getElementById('execute')!.addEventListener('click', reSearch);
+
+const clear = () => {
+  getCheckBoxes().forEach((elem) => {
+    elem.checked = false;
+  });
+};
+document.getElementById('clear')!.addEventListener('click', clear);
+
+const strictSearch = () => {
+  const elem = <HTMLInputElement>document.getElementById('manual-input');
+  if (elem!.value.trim().length < 1) {
+    return;
+  }
+  const qs = ParseQuery(elem!.value).map((q) => `"${q}"`);
+  search(qs);
+};
+document
+  .getElementById('strict-search')!
+  .addEventListener('click', strictSearch);
+
+document.getElementById('manual-input')!.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    document
+      .getElementById('strict-search')!
+      .dispatchEvent(new PointerEvent('click'));
+    e.preventDefault();
+  }
+});
