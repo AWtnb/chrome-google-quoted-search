@@ -9,25 +9,28 @@
     "48": "icons/icon_48.png",
     "128": "icons/icon_128.png"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
+  "background": {},
   "action": {
     "default_title": "Chrome Google Quoted Search",
     "default_popup": "popup.html"
   },
-  "permissions": [
-  ],
+  "permissions": [],
+  "commands": {
+    "_execute_action": {
+      "description": "open popup",
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Ctrl+Shift+K",
+        "windows": "Ctrl+Shift+K",
+        "linux": "Ctrl+Shift+K"
+      }
+    }
+  },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.google.com/*",
-        "https://www.google.co.jp/*"
-      ],
+      "matches": ["<all_urls>"],
       "run_at": "document_idle",
-      "js": [
-        "contentScript.js"
-      ]
+      "js": ["contentScript.js"]
     }
   ]
 }

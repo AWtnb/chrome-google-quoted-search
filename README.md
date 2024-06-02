@@ -1,21 +1,10 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Chrome Google Quoted Search
+![img](./public/icons/icon_48.png)
 
-My Chrome Extension
+# Chrome Google Quoted Search
 
-## Features
-
-- Feature 1
-- Feature 2
-
-## Install
-
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
-
-## Contribution
-
-Suggestions and pull requests are welcomed!.
 
 ---
 
-This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
+- This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
+- Tanks: [chota](https://jenil.github.io/chota/) css framework.
 

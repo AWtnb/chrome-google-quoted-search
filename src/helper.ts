@@ -1,5 +1,6 @@
 export enum RequestType {
   'CurrentQuery' = 'currentquery',
+  'Alternative' = 'alternative',
 }
 
 export enum MessageTo {

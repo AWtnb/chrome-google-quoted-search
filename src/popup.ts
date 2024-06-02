@@ -1,13 +1,14 @@
 'use strict';
 
 import './popup.css';
-import './additional.css';
+import 'chota';
 import { RequestToContentScript, RequestType, ParseQuery } from './helper';
 
 RequestToContentScript(RequestType.CurrentQuery);
 
 const makeUI = (label: string): HTMLElement => {
   const d = document.createElement('div');
+  d.className = 'word-container';
   const l = document.createElement('label');
   l.innerText = label;
   const c = document.createElement('input');
@@ -15,7 +16,7 @@ const makeUI = (label: string): HTMLElement => {
   c.className = 'cbox';
   c.value = label;
   c.checked = true;
-  l.append(c);
+  l.insertAdjacentElement('afterbegin', c);
   d.append(l);
   return d;
 };
@@ -38,6 +39,12 @@ chrome.runtime.onMessage.addListener((request) => {
     ParseQuery(request.payload).forEach((s: string) => {
       document.getElementById('words')!.append(makeUI(s));
     });
+    document.getElementById('execute')!.focus();
+    return;
+  }
+  if (request.type === RequestType.Alternative) {
+    const elem = <HTMLInputElement>document.getElementById('manual-input');
+    elem!.value = request.payload;
   }
 });
 
@@ -49,7 +56,7 @@ const getCheckBoxes = (): HTMLInputElement[] => {
 
 const search = (qs: string[]) => {
   const q = encodeURIComponent(qs.join(' '));
-  const to = 'http://www.google.com/search?q=' + q;
+  const to = 'http://www.google.com/search?nfpr=1&q=' + q;
   window.open(to, '_blank');
 };
 

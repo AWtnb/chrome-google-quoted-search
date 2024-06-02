@@ -11,8 +11,17 @@ const getCurrentQuery = (): string => {
 };
 
 chrome.runtime.onMessage.addListener((request) => {
+  console.log(request.type);
   if (request.type === RequestType.CurrentQuery) {
-    SendRuntimeMessage(MessageTo.Popup, request.type, getCurrentQuery());
+    if (document.location.host.startsWith('www.google.')) {
+      SendRuntimeMessage(MessageTo.Popup, request.type, getCurrentQuery());
+      return true;
+    }
+    const s = window.getSelection();
+    if (!s || s.toString().trim().length < 1) {
+      return true;
+    }
+    SendRuntimeMessage(MessageTo.Popup, RequestType.Alternative, s.toString());
   }
   return true;
 });
