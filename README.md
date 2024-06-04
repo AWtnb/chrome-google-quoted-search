@@ -2,16 +2,18 @@
 
 # Chrome Google Quoted Search
 
-## en
+## Features
+
+### en
 
 - You can run the extension by clicking on the icon or using the shortcut keys (default: Ctrl+Shift+K).
-- When executed on a Google search results page, a pop-up window will appear with the current search box contents, and the extension will search for an exact match for the selected word(s).
-- When executed on a non-Google page, an input box will appear. An exact match search is performed for each word entered.
-    - Thevalue of the input box is the text selected on the page.
+- When executed on a Google search results page, a pop-up window will appear with the current search box contents, and you can search for the selected word(s) with exact-match mode on new tab.
+- When executed on a non-Google page, an input box will appear. You can search with exact-match mode on new tab.
+    - The default value of the input box is the text selected on the page.
 
 Translated with DeepL.com (free version)
 
-## ja
+### ja
 
 - アイコンクリックもしくはショートカットキー（デフォルトは Ctrl+Shift+K）から拡張機能を実行できます。
 - Googleの検索結果ページで実行すると、その時点での検索ボックスの内容がポップアップに表示され、選択された単語で完全一致のキーワード検索を行います。
