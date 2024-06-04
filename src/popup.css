@@ -1,3 +1,7 @@
+:root {
+  --color-primary: #1d40da;
+}
+
 body {
   min-width: 200px;
 }
@@ -7,10 +11,8 @@ body > div {
 }
 
 #placeholder {
+  width: 320px;
   display: flex;
-}
-#placeholder #manual-input {
-  width: 200px;
 }
 
 #app {
@@ -22,27 +24,19 @@ body > div {
 }
 
 #words label {
-  font-size: 18px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
-button {
-  margin: 2px;
-}
 button:focus {
-  outline: 2px solid #2f5cbe;
+  outline-color: var(--color-primary);
 }
 
 #buttons {
   display: flex;
-  justify-content: space-between;
 }
-#clear {
-  background-color: transparent;
-  border-color: #575757;
-  color: black;
-}
+
 #execute {
-  font-size: 20px;
   width: 200px;
-  padding: 0;
 }

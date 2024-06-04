@@ -1,7 +1,7 @@
 'use strict';
 
-import './popup.css';
 import 'chota';
+import './popup.css';
 import { RequestToContentScript, RequestType, ParseQuery } from './helper';
 
 RequestToContentScript(RequestType.CurrentQuery);
