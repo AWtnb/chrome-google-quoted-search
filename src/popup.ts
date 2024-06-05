@@ -3,6 +3,7 @@
 import 'chota';
 import './popup.css';
 import { RequestToContentScript, RequestType, ParseQuery } from './helper';
+import { Remover } from './noise';
 
 RequestToContentScript(RequestType.CurrentQuery);
 
@@ -30,6 +31,8 @@ const showContent = () => {
   document.getElementById('app')!.style.display = 'inherit';
 };
 
+const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
+
 chrome.runtime.onMessage.addListener((request) => {
   if (!request.type || !request.payload) {
     return;
@@ -42,9 +45,10 @@ chrome.runtime.onMessage.addListener((request) => {
     document.getElementById('execute')!.focus();
     return;
   }
-  if (request.type === RequestType.Alternative) {
-    const elem = <HTMLInputElement>document.getElementById('manual-input');
-    elem!.value = request.payload;
+  if (request.type === RequestType.Alternative && MANUAL_INPUT) {
+    const remover = new Remover();
+    const s = remover.remove(request.payload);
+    MANUAL_INPUT.value = s;
   }
 });
 
@@ -81,22 +85,20 @@ const clear = () => {
 document.getElementById('clear')!.addEventListener('click', clear);
 
 const strictSearch = () => {
-  const elem = <HTMLInputElement>document.getElementById('manual-input');
-  if (elem!.value.trim().length < 1) {
+  if (!MANUAL_INPUT || MANUAL_INPUT.value.trim().length < 1) {
     return;
   }
-  const qs = ParseQuery(elem!.value).map((q) => `"${q}"`);
+  const qs = ParseQuery(MANUAL_INPUT.value).map((q) => `"${q}"`);
   search(qs);
 };
-document
-  .getElementById('strict-search')!
-  .addEventListener('click', strictSearch);
 
-document.getElementById('manual-input')!.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    document
-      .getElementById('strict-search')!
-      .dispatchEvent(new PointerEvent('click'));
-    e.preventDefault();
-  }
-});
+const STRICT_SEARCH = document.getElementById('strict-search');
+if (STRICT_SEARCH && MANUAL_INPUT) {
+  STRICT_SEARCH.addEventListener('click', strictSearch);
+  MANUAL_INPUT.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      STRICT_SEARCH.dispatchEvent(new PointerEvent('click'));
+      e.preventDefault();
+    }
+  });
+}
