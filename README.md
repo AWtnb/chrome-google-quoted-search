@@ -2,6 +2,10 @@
 
 # Chrome Google Quoted Search
 
+![img](./images/demo-1.png)
+
+![img](./images/demo-2.png)
+
 ## Features
 
 ### en
