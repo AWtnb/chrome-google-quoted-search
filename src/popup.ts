@@ -64,11 +64,18 @@ const search = (qs: string[]) => {
   window.open(to, '_blank');
 };
 
+const quote = (s: string): string => {
+  if (s.startsWith('-')) {
+    return '-"' + s.substring(1) + '"';
+  }
+  return `"${s}"`;
+};
+
 const reSearch = () => {
   const qs = getCheckBoxes().map((elem) => {
     const s = elem.value;
     if (elem.checked) {
-      return `"${s}"`;
+      return quote(s);
     }
     return s;
   });
@@ -88,7 +95,7 @@ const strictSearch = () => {
   if (!MANUAL_INPUT || MANUAL_INPUT.value.trim().length < 1) {
     return;
   }
-  const qs = ParseQuery(MANUAL_INPUT.value).map((q) => `"${q}"`);
+  const qs = ParseQuery(MANUAL_INPUT.value).map(quote);
   search(qs);
 };
 

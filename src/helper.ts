@@ -54,7 +54,7 @@ export const ParseQuery = (q: string): string[] => {
   q.split(/\s+/)
     .filter((s) => 0 < s.trim().length)
     .forEach((s) => {
-      if (s.startsWith('"')) {
+      if (s.startsWith('"') || s.startsWith('-"')) {
         if (s.endsWith('"')) {
           qs.push(s);
           return;
@@ -77,5 +77,12 @@ export const ParseQuery = (q: string): string[] => {
   if (0 < stack.length) {
     qs.push(stack.join(' '));
   }
-  return qs.map((s) => s.replace(/^"|"$/g, ''));
+  return qs
+    .map((s) => s.replace(/^"|"$/g, ''))
+    .map((s) => {
+      if (s.startsWith('-"')) {
+        return '-' + s.substring(2);
+      }
+      return s;
+    });
 };
