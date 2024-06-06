@@ -2,17 +2,12 @@
 
 # Google-Quoted-Search
 
-![img](./images/demo-1.png)
-
-![img](./images/demo-2.png)
-
-![img](./images/demo-3.png)
-
-![img](./images/demo-4.png)
 
 ## Features
 
 ### en
+
+![img](./images/demos-en.png)
 
 - You can run the extension by clicking on the icon or using the shortcut keys (default: Ctrl+Shift+K).
 - When executed on a Google search results page, a pop-up window will appear with the current search box contents, and you can search for the selected word(s) with exact-match mode on new tab.
@@ -20,6 +15,8 @@
     - The default value of the input box is the text selected on the page (punctuations are coverted to whitespace).
 
 ### ja
+
+![img](./images/demos-ja.png)
 
 - アイコンクリックもしくはショートカットキー（デフォルトは Ctrl+Shift+K）から拡張機能を実行できます。
 - Googleの検索結果ページで実行すると、その時点での検索ボックスの内容がポップアップに表示され、選択された単語で完全一致のキーワード検索を行います。
