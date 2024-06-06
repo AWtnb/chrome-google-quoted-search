@@ -1,6 +1,6 @@
 ![img](./public/icons/icon_48.png)
 
-# Chrome Google Quoted Search
+# Google-Quoted-Search
 
 ![img](./images/demo-1.png)
 
