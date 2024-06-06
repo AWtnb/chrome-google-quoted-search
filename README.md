@@ -7,7 +7,7 @@
 
 ### en
 
-![img](./images/demos-en.png)
+![img](./images/demos-en.PNG)
 
 - You can run the extension by clicking on the icon or using the shortcut keys (default: Ctrl+Shift+K).
 - When executed on a Google search results page, a pop-up window will appear with the current search box contents, and you can search for the selected word(s) with exact-match mode on new tab.
@@ -16,7 +16,7 @@
 
 ### ja
 
-![img](./images/demos-ja.png)
+![img](./images/demos-ja.PNG)
 
 - アイコンクリックもしくはショートカットキー（デフォルトは Ctrl+Shift+K）から拡張機能を実行できます。
 - Googleの検索結果ページで実行すると、その時点での検索ボックスの内容がポップアップに表示され、選択された単語で完全一致のキーワード検索を行います。
