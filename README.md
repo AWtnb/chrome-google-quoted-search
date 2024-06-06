@@ -6,6 +6,10 @@
 
 ![img](./images/demo-2.png)
 
+![img](./images/demo-3.png)
+
+![img](./images/demo-4.png)
+
 ## Features
 
 ### en
@@ -14,8 +18,6 @@
 - When executed on a Google search results page, a pop-up window will appear with the current search box contents, and you can search for the selected word(s) with exact-match mode on new tab.
 - When executed on a non-Google page, an input box will appear. You can search with exact-match mode on new tab.
     - The default value of the input box is the text selected on the page (punctuations are coverted to whitespace).
-
-Translated with DeepL.com (free version)
 
 ### ja
 
@@ -27,5 +29,5 @@ Translated with DeepL.com (free version)
 ---
 
 - This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
-- Tanks: [chota](https://jenil.github.io/chota/) css framework.
+- Thanks: [chota](https://jenil.github.io/chota/) css framework.
 

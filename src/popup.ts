@@ -22,12 +22,8 @@ const makeUI = (label: string): HTMLElement => {
   return d;
 };
 
-const hidePlaceholder = () => {
-  document.getElementById('placeholder')!.style.display = 'none';
-};
-
 const showContent = () => {
-  hidePlaceholder();
+  document.getElementById('placeholder')!.style.display = 'none';
   document.getElementById('app')!.style.display = 'inherit';
 };
 
@@ -71,7 +67,7 @@ const quote = (s: string): string => {
   return `"${s}"`;
 };
 
-const reSearch = () => {
+document.getElementById('execute')!.addEventListener('click', () => {
   const qs = getCheckBoxes().map((elem) => {
     const s = elem.value;
     if (elem.checked) {
@@ -80,28 +76,24 @@ const reSearch = () => {
     return s;
   });
   search(qs);
-};
+});
 
-document.getElementById('execute')!.addEventListener('click', reSearch);
-
-const clear = () => {
+document.getElementById('clear')!.addEventListener('click', () => {
   getCheckBoxes().forEach((elem) => {
     elem.checked = false;
   });
-};
-document.getElementById('clear')!.addEventListener('click', clear);
-
-const strictSearch = () => {
-  if (!MANUAL_INPUT || MANUAL_INPUT.value.trim().length < 1) {
-    return;
-  }
-  const qs = ParseQuery(MANUAL_INPUT.value).map(quote);
-  search(qs);
-};
+});
 
 const STRICT_SEARCH = document.getElementById('strict-search');
 if (STRICT_SEARCH && MANUAL_INPUT) {
-  STRICT_SEARCH.addEventListener('click', strictSearch);
+  STRICT_SEARCH.addEventListener('click', () => {
+    const s = MANUAL_INPUT.value;
+    if (s.trim().length < 1) {
+      return;
+    }
+    const qs = ParseQuery(s).map(quote);
+    search(qs);
+  });
   MANUAL_INPUT.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       STRICT_SEARCH.dispatchEvent(new PointerEvent('click'));
