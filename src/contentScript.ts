@@ -11,7 +11,6 @@ const getCurrentQuery = (): string => {
 };
 
 chrome.runtime.onMessage.addListener((request) => {
-  console.log(request.type);
   if (request.type === RequestType.CurrentQuery) {
     if (document.location.host.startsWith('www.google.')) {
       SendRuntimeMessage(MessageTo.Popup, request.type, getCurrentQuery());
