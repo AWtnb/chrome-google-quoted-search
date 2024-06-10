@@ -33,17 +33,20 @@ chrome.runtime.onMessage.addListener((request) => {
   if (!request.type || !request.payload) {
     return;
   }
-  if (request.type === RequestType.CurrentQuery) {
+  if (request.type === RequestType.FromSearchEngine) {
     showContent();
-    ParseQuery(request.payload).forEach((s: string) => {
+    const u = new URL(request.payload.url);
+    const oq = u.searchParams.get('q') || '';
+    ParseQuery(oq).forEach((s: string) => {
       document.getElementById('words')!.append(makeUI(s));
     });
+    document.getElementById('execute')!.setAttribute('raw-url', u.toString());
     document.getElementById('execute')!.focus();
     return;
   }
   if (request.type === RequestType.Alternative && MANUAL_INPUT) {
     const remover = new Remover();
-    const s = remover.remove(request.payload);
+    const s = remover.remove(request.payload.selected);
     MANUAL_INPUT.value = s;
   }
 });
@@ -55,11 +58,15 @@ const getCheckBoxes = (): HTMLInputElement[] => {
 };
 
 const search = (qs: string[]) => {
-  const q = encodeURIComponent(qs.join(' '));
-  const to = 'http://www.google.com/search?nfpr=1&q=' + q;
+  const ru = document.getElementById('execute')!.getAttribute('raw-url') || 'https://www.google.com/search';
+  const u = new URL(ru);
+  u.searchParams.set('q', qs.join(' '));
+  if (u.hostname === "www.google.com") {
+    u.searchParams.set("nfpr", "1")
+  }
   chrome.tabs.create({
-    url: to
-  })
+    url: u.toString(),
+  });
 };
 
 const quote = (s: string): string => {

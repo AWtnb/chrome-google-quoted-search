@@ -1,6 +1,7 @@
 export enum RequestType {
   'CurrentQuery' = 'currentquery',
   'Alternative' = 'alternative',
+  'FromSearchEngine' = 'fromsearchengine',
 }
 
 export enum MessageTo {
@@ -12,7 +13,7 @@ export enum MessageTo {
 export const SendRuntimeMessage = (
   to: MessageTo,
   type: string,
-  payload: string
+  payload: object
 ) => {
   chrome.runtime.sendMessage(
     {

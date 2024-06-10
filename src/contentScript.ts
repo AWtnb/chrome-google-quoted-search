@@ -2,25 +2,31 @@
 
 import { SendRuntimeMessage, MessageTo, RequestType } from './helper';
 
-const getCurrentQuery = (): string => {
-  const sbox = document.getElementsByName('q');
-  if (sbox.length < 1) {
-    return '';
-  }
-  return (<HTMLInputElement>sbox[0]).value;
+const isSearchEngine = (): boolean => {
+  const h = document.location.hostname;
+  return (
+    (h.startsWith('www.google.com') &&
+      document.location.pathname === '/search') ||
+    h.startsWith('duckduckgo.com') ||
+    h.startsWith('www.bing.com')
+  );
 };
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.type === RequestType.CurrentQuery) {
-    if (document.location.host.startsWith('www.google.')) {
-      SendRuntimeMessage(MessageTo.Popup, request.type, getCurrentQuery());
+    if (isSearchEngine()) {
+      SendRuntimeMessage(MessageTo.Popup, RequestType.FromSearchEngine, {
+        url: document.location.href,
+      });
       return true;
     }
     const s = window.getSelection();
     if (!s || s.toString().trim().length < 1) {
       return true;
     }
-    SendRuntimeMessage(MessageTo.Popup, RequestType.Alternative, s.toString());
+    SendRuntimeMessage(MessageTo.Popup, RequestType.Alternative, {
+      selected: s.toString(),
+    });
   }
   return true;
 });
