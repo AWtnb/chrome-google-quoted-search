@@ -57,7 +57,9 @@ const getCheckBoxes = (): HTMLInputElement[] => {
 const search = (qs: string[]) => {
   const q = encodeURIComponent(qs.join(' '));
   const to = 'http://www.google.com/search?nfpr=1&q=' + q;
-  window.open(to, '_blank');
+  chrome.tabs.create({
+    url: to
+  })
 };
 
 const quote = (s: string): string => {
