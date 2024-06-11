@@ -5,10 +5,10 @@ import { SendRuntimeMessage, MessageTo, RequestType } from './helper';
 const isSearchEngine = (): boolean => {
   const h = document.location.hostname;
   return (
-    (h.startsWith('www.google.com') &&
-      document.location.pathname === '/search') ||
-    h.startsWith('duckduckgo.com') ||
-    h.startsWith('www.bing.com')
+    (h === 'www.google.com' && document.location.pathname === '/search') ||
+    h === 'duckduckgo.com' ||
+    h === 'www.bing.com' ||
+    h === 'search.yahoo.co.jp'
   );
 };
 

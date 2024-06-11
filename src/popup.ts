@@ -29,6 +29,14 @@ const showContent = () => {
 
 const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
 
+const isYahoo = (u: URL): boolean => {
+  return u.hostname === 'search.yahoo.co.jp';
+};
+
+const isGoogle = (u: URL): boolean => {
+  return u.hostname === 'www.google.com';
+};
+
 chrome.runtime.onMessage.addListener((request) => {
   if (!request.type || !request.payload) {
     return;
@@ -36,7 +44,12 @@ chrome.runtime.onMessage.addListener((request) => {
   if (request.type === RequestType.FromSearchEngine) {
     showContent();
     const u = new URL(request.payload.url);
-    const oq = u.searchParams.get('q') || '';
+    const oq = ((): string => {
+      if (isYahoo(u)) {
+        return u.searchParams.get('p') || '';
+      }
+      return u.searchParams.get('q') || '';
+    })();
     ParseQuery(oq).forEach((s: string) => {
       document.getElementById('words')!.append(makeUI(s));
     });
@@ -58,11 +71,17 @@ const getCheckBoxes = (): HTMLInputElement[] => {
 };
 
 const search = (qs: string[]) => {
-  const ru = document.getElementById('execute')!.getAttribute('raw-url') || 'https://www.google.com/search';
+  const ru =
+    document.getElementById('execute')!.getAttribute('raw-url') ||
+    'https://www.google.com/search';
   const u = new URL(ru);
-  u.searchParams.set('q', qs.join(' '));
-  if (u.hostname === "www.google.com") {
-    u.searchParams.set("nfpr", "1")
+  if (isYahoo(u)) {
+    u.searchParams.set('p', qs.join(' '));
+  } else {
+    u.searchParams.set('q', qs.join(' '));
+  }
+  if (isGoogle(u)) {
+    u.searchParams.set('nfpr', '1');
   }
   chrome.tabs.create({
     url: u.toString(),
