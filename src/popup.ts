@@ -61,6 +61,7 @@ chrome.runtime.onMessage.addListener((request) => {
     const remover = new Remover();
     const s = remover.remove(request.payload.selected);
     MANUAL_INPUT.value = s;
+    return;
   }
 });
 
