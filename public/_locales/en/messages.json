@@ -2,7 +2,10 @@
   "ext_name": {
     "message": "Google-Quoted-Search"
   },
+  "menu_title": {
+    "message": "Re-search"
+  },
   "manifest_description": {
-    "message": "Re-search on google with words quoted."
+    "message": "Re-search with words quoted."
   }
 }

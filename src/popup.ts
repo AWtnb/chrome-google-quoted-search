@@ -2,7 +2,15 @@
 
 import 'chota';
 import './popup.css';
-import { RequestToContentScript, RequestType, ParseQuery } from './helper';
+import {
+  RequestToContentScript,
+  RequestType,
+  ParseQuery,
+  SmartQuote,
+  GetQuery,
+  NewTabUrl,
+  ToggleQuote,
+} from './helper';
 import { Remover } from './noise';
 
 RequestToContentScript(RequestType.CurrentQuery);
@@ -28,33 +36,26 @@ const showContent = () => {
 };
 
 const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
-
-const isYahoo = (u: URL): boolean => {
-  return u.hostname === 'search.yahoo.co.jp';
-};
-
-const isGoogle = (u: URL): boolean => {
-  return u.hostname === 'www.google.com';
-};
+const EXECUTE_BUTTON = document.getElementById('execute');
 
 chrome.runtime.onMessage.addListener((request) => {
   if (!request.type || !request.payload) {
     return;
   }
   if (request.type === RequestType.FromSearchEngine) {
+    const u = request.payload.url;
+    const q = GetQuery(u);
+    const qs = ParseQuery(q);
+    if (qs.length === 1) {
+      createTab(NewTabUrl([ToggleQuote(q)], u));
+      return;
+    }
     showContent();
-    const u = new URL(request.payload.url);
-    const oq = ((): string => {
-      if (isYahoo(u)) {
-        return u.searchParams.get('p') || '';
-      }
-      return u.searchParams.get('q') || '';
-    })();
-    ParseQuery(oq).forEach((s: string) => {
+    qs.forEach((s: string) => {
       document.getElementById('words')!.append(makeUI(s));
     });
-    document.getElementById('execute')!.setAttribute('raw-url', u.toString());
-    document.getElementById('execute')!.focus();
+    EXECUTE_BUTTON!.setAttribute('raw-url', u);
+    EXECUTE_BUTTON!.focus();
     return;
   }
   if (request.type === RequestType.Alternative && MANUAL_INPUT) {
@@ -71,40 +72,22 @@ const getCheckBoxes = (): HTMLInputElement[] => {
   );
 };
 
-const search = (qs: string[]) => {
-  const ru =
-    document.getElementById('execute')!.getAttribute('raw-url') ||
-    'https://www.google.com/search';
-  const u = new URL(ru);
-  if (isYahoo(u)) {
-    u.searchParams.set('p', qs.join(' '));
-  } else {
-    u.searchParams.set('q', qs.join(' '));
-  }
-  if (isGoogle(u)) {
-    u.searchParams.set('nfpr', '1');
-  }
+const createTab = (u: string) => {
   chrome.tabs.create({
-    url: u.toString(),
+    url: u,
   });
 };
 
-const quote = (s: string): string => {
-  if (s.startsWith('-')) {
-    return '-"' + s.substring(1) + '"';
-  }
-  return `"${s}"`;
-};
-
-document.getElementById('execute')!.addEventListener('click', () => {
+EXECUTE_BUTTON!.addEventListener('click', (e) => {
   const qs = getCheckBoxes().map((elem) => {
     const s = elem.value;
     if (elem.checked) {
-      return quote(s);
+      return SmartQuote(s);
     }
     return s;
   });
-  search(qs);
+  const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
+  createTab(NewTabUrl(qs, u));
 });
 
 document.getElementById('clear')!.addEventListener('click', () => {
@@ -120,8 +103,9 @@ if (STRICT_SEARCH && MANUAL_INPUT) {
     if (s.trim().length < 1) {
       return;
     }
-    const qs = ParseQuery(s).map(quote);
-    search(qs);
+    const qs = ParseQuery(s).map(SmartQuote);
+    const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
+    createTab(NewTabUrl(qs, u));
   });
   MANUAL_INPUT.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {

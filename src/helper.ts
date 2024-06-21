@@ -2,6 +2,7 @@ export enum RequestType {
   'CurrentQuery' = 'currentquery',
   'Alternative' = 'alternative',
   'FromSearchEngine' = 'fromsearchengine',
+  'FromContextMenu' = 'fromcontextmenu',
 }
 
 export enum MessageTo {
@@ -29,7 +30,10 @@ export const SendRuntimeMessage = (
   );
 };
 
-export const RequestToContentScript = (requestName: string) => {
+export const RequestToContentScript = (
+  requestName: string,
+  payload: object = {}
+) => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs[0];
     if (!tab.id) {
@@ -39,6 +43,7 @@ export const RequestToContentScript = (requestName: string) => {
       tab.id,
       {
         type: requestName,
+        payload: payload,
       },
       () => {
         if (chrome.runtime.lastError) {
@@ -86,4 +91,50 @@ export const ParseQuery = (q: string): string[] => {
       }
       return s;
     });
+};
+
+export const ToggleQuote = (s: string): string => {
+  if (s.startsWith('"')) {
+    return s.replace(/^"|"$/g, "")
+  }
+  return SmartQuote(s);
+};
+
+export const SmartQuote = (s: string): string => {
+  if (s.startsWith('-')) {
+    return '-"' + s.substring(1) + '"';
+  }
+  return `"${s}"`;
+};
+
+const isYahoo = (u: URL): boolean => {
+  return u.hostname === 'search.yahoo.co.jp';
+};
+
+const isGoogle = (u: URL): boolean => {
+  return u.hostname === 'www.google.com';
+};
+
+export const GetQuery = (url: string): string => {
+  const u = new URL(url);
+  if (isYahoo(u)) {
+    return u.searchParams.get('p')?.trim() || '';
+  }
+  return u.searchParams.get('q')?.trim() || '';
+};
+
+export const NewTabUrl = (qs: string[], rawUrl: string): string => {
+  if (rawUrl.trim().length < 1) {
+    rawUrl = 'https://www.google.com/search';
+  }
+  const u = new URL(rawUrl);
+  if (isYahoo(u)) {
+    u.searchParams.set('p', qs.join(' '));
+  } else {
+    u.searchParams.set('q', qs.join(' '));
+  }
+  if (isGoogle(u)) {
+    u.searchParams.set('nfpr', '1');
+  }
+  return u.toString();
 };

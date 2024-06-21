@@ -1,6 +1,15 @@
 'use strict';
 
-import { SendRuntimeMessage, MessageTo, RequestType } from './helper';
+import {
+  SendRuntimeMessage,
+  MessageTo,
+  RequestType,
+  NewTabUrl,
+  GetQuery,
+  ParseQuery,
+  SmartQuote,
+  ToggleQuote,
+} from './helper';
 
 const isSearchEngine = (): boolean => {
   const h = document.location.hostname;
@@ -13,7 +22,23 @@ const isSearchEngine = (): boolean => {
   );
 };
 
+const newTab = (u: string) => {
+  window.open(u, '_blank');
+};
+
 chrome.runtime.onMessage.addListener((request) => {
+  if (request.type === RequestType.FromContextMenu) {
+    // only requested on search result page
+    const u = document.location.href;
+    const q = GetQuery(u);
+    const qs = ParseQuery(q).map(SmartQuote);
+    if (qs.length === 1) {
+      newTab(NewTabUrl([ToggleQuote(q)], u));
+    } else {
+      newTab(NewTabUrl(qs, u));
+    }
+    return true;
+  }
   if (request.type === RequestType.CurrentQuery) {
     if (isSearchEngine()) {
       SendRuntimeMessage(MessageTo.Popup, RequestType.FromSearchEngine, {

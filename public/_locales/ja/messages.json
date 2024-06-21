@@ -2,7 +2,10 @@
   "ext_name": {
     "message": "Googleキーワード検索"
   },
+  "menu_title": {
+    "message": "再検索"
+  },
   "manifest_description": {
-    "message": "Google検索結果をキーワード検索（完全一致検索）で検索しなおします。"
+    "message": "検索結果をキーワード検索（完全一致検索）で検索しなおします。"
   }
 }
