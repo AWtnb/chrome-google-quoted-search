@@ -1,34 +1,63 @@
 'use strict';
 
 import {
-  SendRuntimeMessage,
-  MessageTo,
-  RequestType,
   NewTabUrl,
   GetQuery,
   ParseQuery,
   SmartQuote,
   ToggleQuote,
+  Message,
+  broadcast,
+  SearchEnginePattern,
 } from './helper';
 
 const isSearchEngine = (): boolean => {
-  const h = document.location.hostname;
-  return (
-    (h.startsWith('www.google.') && document.location.pathname === '/search') ||
-    h.startsWith('scholar.google.') ||
-    h.startsWith('search.yahoo.') ||
-    h === 'duckduckgo.com' ||
-    h === 'www.bing.com'
-  );
+  const h = document.location.href;
+  return SearchEnginePattern.some((s) => {
+    return h.startsWith(s.substring(0, s.length - 1));
+  });
 };
 
 const newTab = (u: string) => {
   window.open(u, '_blank');
 };
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.type === RequestType.FromContextMenu) {
-    // only requested on search result page
+chrome.runtime.onMessage.addListener((msg: Message) => {
+  if (msg.to !== 'contentScript') {
+    return;
+  }
+
+  if (msg.type === 'request-current-query') {
+    if (isSearchEngine()) {
+      broadcast({
+        to: 'popup',
+        type: 'reply-current-query',
+        payload: {
+          content: document.location.href,
+        },
+      });
+      return;
+    }
+
+    const s = window.getSelection();
+    if (!s || s.toString().trim().length < 1) {
+      return;
+    }
+
+    broadcast({
+      to: 'popup',
+      type: 'reply-current-selection',
+      payload: {
+        content: s.toString(),
+      },
+    });
+    return;
+  }
+
+  if (msg.type === 'request-re-search') {
+    if (!isSearchEngine()) {
+      return;
+    }
     const u = document.location.href;
     const q = GetQuery(u);
     const qs = ParseQuery(q).map(SmartQuote);
@@ -37,22 +66,8 @@ chrome.runtime.onMessage.addListener((request) => {
     } else {
       newTab(NewTabUrl(qs, u));
     }
-    return true;
+    return;
   }
-  if (request.type === RequestType.CurrentQuery) {
-    if (isSearchEngine()) {
-      SendRuntimeMessage(MessageTo.Popup, RequestType.FromSearchEngine, {
-        url: document.location.href,
-      });
-      return true;
-    }
-    const s = window.getSelection();
-    if (!s || s.toString().trim().length < 1) {
-      return true;
-    }
-    SendRuntimeMessage(MessageTo.Popup, RequestType.Alternative, {
-      selected: s.toString(),
-    });
-  }
-  return true;
+
+  return;
 });

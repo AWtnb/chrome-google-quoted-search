@@ -1,58 +1,30 @@
-export enum RequestType {
-  'CurrentQuery' = 'currentquery',
-  'Alternative' = 'alternative',
-  'FromSearchEngine' = 'fromsearchengine',
-  'FromContextMenu' = 'fromcontextmenu',
-}
+export type MessageType =
+  | 'request-current-query'
+  | 'request-re-search'
+  | 'reply-current-query'
+  | 'reply-current-selection';
 
-export enum MessageTo {
-  'Popup' = 'popup',
-  'Content' = 'content',
-  'Background' = 'background',
-}
-
-export const SendRuntimeMessage = (
-  to: MessageTo,
-  type: string,
-  payload: object
-) => {
-  chrome.runtime.sendMessage(
-    {
-      to: to,
-      type: type,
-      payload: payload,
-    },
-    () => {
-      if (chrome.runtime.lastError) {
-        console.log('something happened: ', chrome.runtime.lastError.message);
-      }
-    }
-  );
+export type Payload = {
+  content: string;
 };
 
-export const RequestToContentScript = (
-  requestName: string,
-  payload: object = {}
-) => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (!tab.id) {
-      return;
-    }
-    chrome.tabs.sendMessage(
-      tab.id,
-      {
-        type: requestName,
-        payload: payload,
-      },
-      () => {
-        if (chrome.runtime.lastError) {
-          console.log('something happened: ', chrome.runtime.lastError.message);
-        }
-      }
-    );
-  });
+export type Message = {
+  to: 'popup' | 'contentScript' | 'background';
+  type: MessageType;
+  payload: Payload | null;
 };
+
+export const broadcast = (m: Message) => {
+  chrome.runtime.sendMessage(m);
+};
+
+export const SearchEnginePattern = [
+  'https://www.google.com/search*',
+  'https://scholar.google.com/scholar*',
+  'https://search.yahoo.co.jp/search*',
+  'https://duckduckgo.com/*',
+  'https://www.bing.com/search*',
+];
 
 export const ParseQuery = (q: string): string[] => {
   const qs: string[] = [];
@@ -95,7 +67,7 @@ export const ParseQuery = (q: string): string[] => {
 
 export const ToggleQuote = (s: string): string => {
   if (s.startsWith('"')) {
-    return s.replace(/^"|"$/g, "")
+    return s.replace(/^"|"$/g, '');
   }
   return SmartQuote(s);
 };

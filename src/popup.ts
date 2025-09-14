@@ -3,17 +3,27 @@
 import 'chota';
 import './popup.css';
 import {
-  RequestToContentScript,
-  RequestType,
   ParseQuery,
   SmartQuote,
   GetQuery,
   NewTabUrl,
   ToggleQuote,
+  Message,
 } from './helper';
 import { Remover } from './noise';
 
-RequestToContentScript(RequestType.CurrentQuery);
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const tab = tabs[0];
+  if (!tab.id) {
+    return;
+  }
+  const m: Message = {
+    to: 'contentScript',
+    type: "request-current-query",
+    payload: null,
+  };
+  chrome.tabs.sendMessage(tab.id, m);
+});
 
 const makeUI = (label: string): HTMLElement => {
   const d = document.createElement('div');
@@ -38,12 +48,14 @@ const showContent = () => {
 const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
 const EXECUTE_BUTTON = document.getElementById('execute');
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (!request.type || !request.payload) {
+chrome.runtime.onMessage.addListener((msg: Message) => {
+  console.log(msg);
+  if (msg.to !== 'popup' || !msg.payload) {
     return;
   }
-  if (request.type === RequestType.FromSearchEngine) {
-    const u = request.payload.url;
+
+  if (msg.type === 'reply-current-query') {
+    const u = msg.payload.content;
     const q = GetQuery(u);
     const qs = ParseQuery(q);
     if (qs.length === 1) {
@@ -58,12 +70,14 @@ chrome.runtime.onMessage.addListener((request) => {
     EXECUTE_BUTTON!.focus();
     return;
   }
-  if (request.type === RequestType.Alternative && MANUAL_INPUT) {
+
+  if (msg.type === 'reply-current-selection' && MANUAL_INPUT) {
     const remover = new Remover();
-    const s = remover.remove(request.payload.selected);
+    const s = remover.remove(msg.payload.content);
     MANUAL_INPUT.value = s;
     return;
   }
+  return;
 });
 
 const getCheckBoxes = (): HTMLInputElement[] => {
