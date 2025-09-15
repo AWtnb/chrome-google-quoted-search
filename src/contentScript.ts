@@ -16,10 +16,6 @@ const isSearchEngine = (): boolean => {
   });
 };
 
-const newTab = (u: string) => {
-  window.open(u, '_blank');
-};
-
 chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.to !== 'contentScript') {
     return;
