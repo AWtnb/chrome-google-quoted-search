@@ -54,8 +54,12 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
     }
     const u = document.location.href;
     const q = getQuery(u);
-    const qs = parseQuery(q).map((token) => token.base());
-    onNewTab(u, ...qs);
+    const qs = parseQuery(q);
+    if (qs.every((q) => q.quoted)) {
+      onNewTab(u, ...qs.map((q) => q.base()));
+    } else {
+      onNewTab(u, ...qs.map((q) => q.quote()));
+    }
     return;
   }
 

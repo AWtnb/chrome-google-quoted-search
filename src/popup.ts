@@ -55,7 +55,8 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
     const q = getQuery(u);
     const tokens = parseQuery(q);
     if (tokens.length === 1) {
-      onNewTab(u, tokens[0].quote());
+      const t = tokens[0];
+      onNewTab(u, t.toggle());
       return;
     }
     showContent();

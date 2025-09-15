@@ -27,30 +27,6 @@ export const SearchEnginePattern = [
   'https://www.bing.com/search*',
 ];
 
-export class Token {
-  private readonly prefix: string;
-  private readonly content: string;
-  readonly minus: boolean;
-  constructor(s: string) {
-    this.minus = s.startsWith('-');
-    this.prefix = this.minus ? '-' : '';
-    this.content = this.minus ? s.substring(1) : s;
-  }
-  quote(): string {
-    return this.prefix + `"${this.content}"`;
-  }
-  base(): string {
-    return this.prefix + this.content;
-  }
-}
-
-const splitBySpaces = (text: string): Token[] => {
-  return text
-    .split(/\s+/)
-    .filter((s) => 0 < s.length)
-    .map((s) => new Token(s));
-};
-
 const unQuote = (quoted: string): string => {
   if (quoted.startsWith('-"') && quoted.endsWith('"')) {
     return '-' + quoted.slice(2, -1);
@@ -59,6 +35,38 @@ const unQuote = (quoted: string): string => {
     return quoted.slice(1, -1);
   }
   return quoted;
+};
+
+export class Token {
+  private readonly prefix: string;
+  private readonly content: string;
+  readonly quoted: boolean;
+  readonly minus: boolean;
+  constructor(s: string) {
+    this.minus = s.startsWith('-');
+    this.quoted = s.endsWith('"');
+    this.prefix = this.minus ? '-' : '';
+    this.content = unQuote(s);
+  }
+  quote(): string {
+    return this.prefix + `"${this.content}"`;
+  }
+  base(): string {
+    return this.prefix + this.content;
+  }
+  toggle(): string {
+    if (this.quoted) {
+      return this.base();
+    }
+    return this.quote();
+  }
+}
+
+const splitBySpaces = (text: string): Token[] => {
+  return text
+    .split(/\s+/)
+    .filter((s) => 0 < s.length)
+    .map((s) => new Token(s));
 };
 
 export const parseQuery = (q: string): Token[] => {
@@ -88,7 +96,7 @@ export const parseQuery = (q: string): Token[] => {
       tokens.push(...splitBySpaces(beforeText));
     }
 
-    const t = new Token(unQuote(quoted.match));
+    const t = new Token(quoted.match);
     tokens.push(t);
 
     lastIndex = quoted.endIndex;
