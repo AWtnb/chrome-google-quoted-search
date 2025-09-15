@@ -2,7 +2,8 @@ export type MessageType =
   | 'request-current-query'
   | 'request-re-search'
   | 'reply-current-query'
-  | 'reply-current-selection';
+  | 'reply-current-selection'
+  | 'request-create-tab';
 
 export type Payload = {
   content: string;
@@ -26,57 +27,79 @@ export const SearchEnginePattern = [
   'https://www.bing.com/search*',
 ];
 
-export const ParseQuery = (q: string): string[] => {
-  const qs: string[] = [];
-  const stack: string[] = [];
-  q.split(/\s+/)
-    .filter((s) => 0 < s.trim().length)
-    .forEach((s) => {
-      if (s.startsWith('"') || s.startsWith('-"')) {
-        if (s.endsWith('"')) {
-          qs.push(s);
-          return;
-        }
-        stack.push(s);
-        return;
-      }
-      if (s.endsWith('"')) {
-        stack.push(s);
-        qs.push(stack.join(' '));
-        stack.splice(0);
-        return;
-      }
-      if (0 < stack.length) {
-        stack.push(s);
-        return;
-      }
-      qs.push(s);
-    });
-  if (0 < stack.length) {
-    qs.push(stack.join(' '));
+export class Token {
+  private readonly prefix: string;
+  private readonly content: string;
+  readonly minus: boolean;
+  constructor(s: string) {
+    this.minus = s.startsWith('-');
+    this.prefix = this.minus ? '-' : '';
+    this.content = this.minus ? s.substring(1) : s;
   }
-  return qs
-    .map((s) => s.replace(/^"|"$/g, ''))
-    .map((s) => {
-      if (s.startsWith('-"')) {
-        return '-' + s.substring(2);
-      }
-      return s;
-    });
+  quote(): string {
+    return this.prefix + `"${this.content}"`;
+  }
+  base(): string {
+    return this.prefix + this.content;
+  }
+}
+
+const splitBySpaces = (text: string): Token[] => {
+  return text
+    .split(/\s+/)
+    .filter((s) => 0 < s.length)
+    .map((s) => new Token(s));
 };
 
-export const ToggleQuote = (s: string): string => {
-  if (s.startsWith('"')) {
-    return s.replace(/^"|"$/g, '');
+const unQuote = (quoted: string): string => {
+  if (quoted.startsWith('-"') && quoted.endsWith('"')) {
+    return '-' + quoted.slice(2, -1);
   }
-  return SmartQuote(s);
+  if (quoted.startsWith('"') && quoted.endsWith('"')) {
+    return quoted.slice(1, -1);
+  }
+  return quoted;
 };
 
-export const SmartQuote = (s: string): string => {
-  if (s.startsWith('-')) {
-    return '-"' + s.substring(1) + '"';
+export const parseQuery = (q: string): Token[] => {
+  const tokens: Token[] = [];
+
+  const quotedRegex = /-?"[^"]*"/g;
+  const quotedMatches: Array<{
+    match: string;
+    index: number;
+    endIndex: number;
+  }> = [];
+
+  let m: RegExpExecArray | null;
+  while ((m = quotedRegex.exec(q)) !== null) {
+    quotedMatches.push({
+      match: m[0],
+      index: m.index,
+      endIndex: m.index + m[0].length,
+    });
   }
-  return `"${s}"`;
+
+  let lastIndex = 0;
+
+  for (const quoted of quotedMatches) {
+    if (lastIndex < quoted.index) {
+      const beforeText = q.substring(lastIndex, quoted.index);
+      tokens.push(...splitBySpaces(beforeText));
+    }
+
+    const t = new Token(unQuote(quoted.match));
+    tokens.push(t);
+
+    lastIndex = quoted.endIndex;
+  }
+
+  if (lastIndex < q.length) {
+    const afterText = q.substring(lastIndex);
+    tokens.push(...splitBySpaces(afterText));
+  }
+
+  return tokens;
 };
 
 const isYahoo = (u: URL): boolean => {
@@ -87,7 +110,7 @@ const isGoogle = (u: URL): boolean => {
   return u.hostname === 'www.google.com';
 };
 
-export const GetQuery = (url: string): string => {
+export const getQuery = (url: string): string => {
   const u = new URL(url);
   if (isYahoo(u)) {
     return u.searchParams.get('p')?.trim() || '';
@@ -95,18 +118,23 @@ export const GetQuery = (url: string): string => {
   return u.searchParams.get('q')?.trim() || '';
 };
 
-export const NewTabUrl = (qs: string[], rawUrl: string): string => {
+export const onNewTab = (rawUrl: string, ...tokens: string[]) => {
   if (rawUrl.trim().length < 1) {
     rawUrl = 'https://www.google.com/search';
   }
   const u = new URL(rawUrl);
+  const queries = tokens.join(' ');
   if (isYahoo(u)) {
-    u.searchParams.set('p', qs.join(' '));
+    u.searchParams.set('p', queries);
   } else {
-    u.searchParams.set('q', qs.join(' '));
+    u.searchParams.set('q', queries);
   }
   if (isGoogle(u)) {
     u.searchParams.set('nfpr', '1');
   }
-  return u.toString();
+  broadcast({
+    to: 'background',
+    type: 'request-create-tab',
+    payload: { content: u.toString() },
+  });
 };

@@ -27,3 +27,13 @@ chrome.contextMenus.onClicked.addListener((info) => {
     });
   }
 });
+
+chrome.runtime.onMessage.addListener((msg: Message) => {
+  if (msg.to == 'background' && msg.type == 'request-create-tab') {
+    if (msg.payload) {
+      chrome.tabs.create({
+        url: msg.payload.content,
+      });
+    }
+  }
+});

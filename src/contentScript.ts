@@ -1,11 +1,9 @@
 'use strict';
 
 import {
-  NewTabUrl,
-  GetQuery,
-  ParseQuery,
-  SmartQuote,
-  ToggleQuote,
+  onNewTab,
+  getQuery,
+  parseQuery,
   Message,
   broadcast,
   SearchEnginePattern,
@@ -59,13 +57,9 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
       return;
     }
     const u = document.location.href;
-    const q = GetQuery(u);
-    const qs = ParseQuery(q).map(SmartQuote);
-    if (qs.length === 1) {
-      newTab(NewTabUrl([ToggleQuote(q)], u));
-    } else {
-      newTab(NewTabUrl(qs, u));
-    }
+    const q = getQuery(u);
+    const qs = parseQuery(q).map((token) => token.base());
+    onNewTab(u, ...qs);
     return;
   }
 

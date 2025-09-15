@@ -2,14 +2,7 @@
 
 import 'chota';
 import './popup.css';
-import {
-  ParseQuery,
-  SmartQuote,
-  GetQuery,
-  NewTabUrl,
-  ToggleQuote,
-  Message,
-} from './helper';
+import { parseQuery, getQuery, onNewTab, Message, Token } from './helper';
 import { Remover } from './noise';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -19,15 +12,19 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   }
   const m: Message = {
     to: 'contentScript',
-    type: "request-current-query",
+    type: 'request-current-query',
     payload: null,
   };
   chrome.tabs.sendMessage(tab.id, m);
 });
 
-const makeUI = (label: string): HTMLElement => {
+const makeUI = (token: Token): HTMLElement => {
+  const label = token.base();
   const d = document.createElement('div');
   d.className = 'word-container';
+  if (token.minus) {
+    d.classList.add('minused');
+  }
   const l = document.createElement('label');
   l.innerText = label;
   const c = document.createElement('input');
@@ -49,22 +46,21 @@ const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
 const EXECUTE_BUTTON = document.getElementById('execute');
 
 chrome.runtime.onMessage.addListener((msg: Message) => {
-  console.log(msg);
   if (msg.to !== 'popup' || !msg.payload) {
     return;
   }
 
   if (msg.type === 'reply-current-query') {
     const u = msg.payload.content;
-    const q = GetQuery(u);
-    const qs = ParseQuery(q);
-    if (qs.length === 1) {
-      createTab(NewTabUrl([ToggleQuote(q)], u));
+    const q = getQuery(u);
+    const tokens = parseQuery(q);
+    if (tokens.length === 1) {
+      onNewTab(u, tokens[0].quote());
       return;
     }
     showContent();
-    qs.forEach((s: string) => {
-      document.getElementById('words')!.append(makeUI(s));
+    tokens.forEach((t: Token) => {
+      document.getElementById('words')!.append(makeUI(t));
     });
     EXECUTE_BUTTON!.setAttribute('raw-url', u);
     EXECUTE_BUTTON!.focus();
@@ -86,22 +82,18 @@ const getCheckBoxes = (): HTMLInputElement[] => {
   );
 };
 
-const createTab = (u: string) => {
-  chrome.tabs.create({
-    url: u,
-  });
-};
-
-EXECUTE_BUTTON!.addEventListener('click', (e) => {
+// ctrl-enter でも同じことをしたい
+EXECUTE_BUTTON!.addEventListener('click', (_) => {
   const qs = getCheckBoxes().map((elem) => {
     const s = elem.value;
     if (elem.checked) {
-      return SmartQuote(s);
+      const t = new Token(s);
+      return t.quote();
     }
     return s;
   });
   const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
-  createTab(NewTabUrl(qs, u));
+  onNewTab(u, ...qs);
 });
 
 document.getElementById('clear')!.addEventListener('click', () => {
@@ -117,9 +109,9 @@ if (STRICT_SEARCH && MANUAL_INPUT) {
     if (s.trim().length < 1) {
       return;
     }
-    const qs = ParseQuery(s).map(SmartQuote);
+    const qs = parseQuery(s).map((token) => token.quote());
     const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
-    createTab(NewTabUrl(qs, u));
+    onNewTab(u, ...qs);
   });
   MANUAL_INPUT.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
