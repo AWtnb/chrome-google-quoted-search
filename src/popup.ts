@@ -2,12 +2,26 @@
 
 import 'chota';
 import './popup.css';
-import { parseQuery, getQuery, onNewTab, Message, Token } from './helper';
+import {
+  parseQuery,
+  getQuery,
+  onNewTab,
+  Message,
+  Token,
+  isSearchEngine,
+} from './helper';
 import { Remover } from './noise';
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const tab = tabs[0];
   if (!tab.id) {
+    return;
+  }
+  const u = tab.url;
+  if (!u) {
+    return;
+  }
+  if (!isSearchEngine(u)) {
     return;
   }
   const m: Message = {
@@ -19,7 +33,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 });
 
 const makeUI = (token: Token): HTMLElement => {
-  const label = token.base();
+  const label = token.content;
   const d = document.createElement('div');
   d.className = 'word-container';
   if (token.minus) {
@@ -30,7 +44,7 @@ const makeUI = (token: Token): HTMLElement => {
   const c = document.createElement('input');
   c.type = 'checkbox';
   c.className = 'cbox';
-  c.value = label;
+  c.value = token.base();
   c.checked = true;
   l.insertAdjacentElement('afterbegin', c);
   d.append(l);
@@ -41,9 +55,6 @@ const showContent = () => {
   document.getElementById('placeholder')!.style.display = 'none';
   document.getElementById('app')!.style.display = 'inherit';
 };
-
-const MANUAL_INPUT = <HTMLInputElement>document.getElementById('manual-input');
-const EXECUTE_BUTTON = document.getElementById('execute');
 
 chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.to !== 'popup' || !msg.payload) {
@@ -63,18 +74,18 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
     tokens.forEach((t: Token) => {
       document.getElementById('words')!.append(makeUI(t));
     });
-    EXECUTE_BUTTON!.setAttribute('raw-url', u);
-    EXECUTE_BUTTON!.focus();
+    const button = document.getElementById('execute')!;
+    button.setAttribute('raw-url', u);
+    button.focus();
     return;
   }
 
-  if (msg.type === 'reply-current-selection' && MANUAL_INPUT) {
+  if (msg.type === 'reply-current-selection') {
     const remover = new Remover();
     const s = remover.remove(msg.payload.content);
-    MANUAL_INPUT.value = s;
+    (document.getElementById('manual-input') as HTMLInputElement).value = s;
     return;
   }
-  return;
 });
 
 const getCheckBoxes = (): HTMLInputElement[] => {
@@ -83,8 +94,7 @@ const getCheckBoxes = (): HTMLInputElement[] => {
   );
 };
 
-// ctrl-enter でも同じことをしたい
-EXECUTE_BUTTON!.addEventListener('click', (_) => {
+const searchWithQuotedWords = () => {
   const qs = getCheckBoxes().map((elem) => {
     const s = elem.value;
     if (elem.checked) {
@@ -93,8 +103,22 @@ EXECUTE_BUTTON!.addEventListener('click', (_) => {
     }
     return s;
   });
-  const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
+  const u = document.getElementById('execute')!.getAttribute('raw-url') || '';
   onNewTab(u, ...qs);
+};
+
+document
+  .getElementById('execute')!
+  .addEventListener('click', searchWithQuotedWords);
+
+document.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (document.getElementById('app')!.style.display === 'none') {
+    return;
+  }
+  if (e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    searchWithQuotedWords();
+  }
 });
 
 document.getElementById('clear')!.addEventListener('click', () => {
@@ -103,21 +127,21 @@ document.getElementById('clear')!.addEventListener('click', () => {
   });
 });
 
-const STRICT_SEARCH = document.getElementById('strict-search');
-if (STRICT_SEARCH && MANUAL_INPUT) {
-  STRICT_SEARCH.addEventListener('click', () => {
-    const s = MANUAL_INPUT.value;
-    if (s.trim().length < 1) {
-      return;
-    }
-    const qs = parseQuery(s).map((token) => token.quote());
-    const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
-    onNewTab(u, ...qs);
-  });
-  MANUAL_INPUT.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      STRICT_SEARCH.dispatchEvent(new PointerEvent('click'));
-      e.preventDefault();
-    }
-  });
-}
+// const STRICT_SEARCH = document.getElementById('strict-search');
+// if (STRICT_SEARCH) {
+//   STRICT_SEARCH.addEventListener('click', () => {
+//     const s = MANUAL_INPUT.value;
+//     if (s.trim().length < 1) {
+//       return;
+//     }
+//     const qs = parseQuery(s).map((token) => token.quote());
+//     const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
+//     onNewTab(u, ...qs);
+//   });
+//   MANUAL_INPUT.addEventListener('keydown', (e) => {
+//     if (e.key === 'Enter') {
+//       STRICT_SEARCH.dispatchEvent(new PointerEvent('click'));
+//       e.preventDefault();
+//     }
+//   });
+// }

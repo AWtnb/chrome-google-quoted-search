@@ -17,7 +17,7 @@
     "default_title": "Chrome Google Quoted Search",
     "default_popup": "popup.html"
   },
-  "permissions": ["contextMenus"],
+  "permissions": ["contextMenus", "tabs"],
   "commands": {
     "_execute_action": {
       "description": "open popup",

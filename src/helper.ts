@@ -27,6 +27,12 @@ export const SearchEnginePattern = [
   'https://www.bing.com/search*',
 ];
 
+export const isSearchEngine = (url: string): boolean => {
+  return SearchEnginePattern.some((s) => {
+    return url.startsWith(s.substring(0, s.length - 1));
+  });
+};
+
 const unQuote = (quoted: string): string => {
   if (quoted.startsWith('-"') && quoted.endsWith('"')) {
     return '-' + quoted.slice(2, -1);
@@ -39,14 +45,23 @@ const unQuote = (quoted: string): string => {
 
 export class Token {
   private readonly prefix: string;
-  private readonly content: string;
+  readonly content: string;
   readonly quoted: boolean;
   readonly minus: boolean;
   constructor(s: string) {
     this.minus = s.startsWith('-');
     this.quoted = s.endsWith('"');
     this.prefix = this.minus ? '-' : '';
-    this.content = unQuote(s);
+    this.content = (() => {
+      let c = s;
+      if (this.minus) {
+        c = c.substring(1);
+      }
+      if (this.quoted) {
+        c = c.slice(1, -1);
+      }
+      return c;
+    })();
   }
   quote(): string {
     return this.prefix + `"${this.content}"`;

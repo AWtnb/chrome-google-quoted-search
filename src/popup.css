@@ -15,10 +15,6 @@ body > div {
   display: flex;
 }
 
-#app {
-  display: none;
-}
-
 #words {
   padding: 4px 0;
 }
@@ -27,6 +23,12 @@ body > div {
   font-size: 16px;
   display: flex;
   align-items: center;
+}
+
+.word-container.minused label::after {
+  content: "\26D4";
+  position: relative;
+  right: -0.5em;
 }
 
 button:focus {

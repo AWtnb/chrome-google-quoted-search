@@ -6,23 +6,18 @@ import {
   parseQuery,
   Message,
   broadcast,
-  SearchEnginePattern,
+  isSearchEngine,
 } from './helper';
 
-const isSearchEngine = (): boolean => {
-  const h = document.location.href;
-  return SearchEnginePattern.some((s) => {
-    return h.startsWith(s.substring(0, s.length - 1));
-  });
-};
 
 chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.to !== 'contentScript') {
     return;
   }
+  console.log(msg);
 
   if (msg.type === 'request-current-query') {
-    if (isSearchEngine()) {
+    if (isSearchEngine(document.location.href)) {
       broadcast({
         to: 'popup',
         type: 'reply-current-query',
@@ -49,7 +44,7 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
   }
 
   if (msg.type === 'request-re-search') {
-    if (!isSearchEngine()) {
+    if (!isSearchEngine(document.location.href)) {
       return;
     }
     const u = document.location.href;
