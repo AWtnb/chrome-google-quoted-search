@@ -18,10 +18,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     return;
   }
   const u = tab.url;
-  if (!u) {
-    return;
-  }
-  if (!isSearchEngine(u)) {
+  if (!u || !u.startsWith('http')) {
     return;
   }
   const m: Message = {
@@ -83,7 +80,7 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.type === 'reply-current-selection') {
     const remover = new Remover();
     const s = remover.remove(msg.payload.content);
-    (document.getElementById('manual-input') as HTMLInputElement).value = s;
+    (document.getElementById('manual-input') as HTMLInputElement)!.value = s;
     return;
   }
 });
@@ -127,21 +124,24 @@ document.getElementById('clear')!.addEventListener('click', () => {
   });
 });
 
-// const STRICT_SEARCH = document.getElementById('strict-search');
-// if (STRICT_SEARCH) {
-//   STRICT_SEARCH.addEventListener('click', () => {
-//     const s = MANUAL_INPUT.value;
-//     if (s.trim().length < 1) {
-//       return;
-//     }
-//     const qs = parseQuery(s).map((token) => token.quote());
-//     const u = EXECUTE_BUTTON!.getAttribute('raw-url') || '';
-//     onNewTab(u, ...qs);
-//   });
-//   MANUAL_INPUT.addEventListener('keydown', (e) => {
-//     if (e.key === 'Enter') {
-//       STRICT_SEARCH.dispatchEvent(new PointerEvent('click'));
-//       e.preventDefault();
-//     }
-//   });
-// }
+const searchWithManualInputWords = () => {
+  const s = (document.getElementById('manual-input') as HTMLInputElement)!
+    .value;
+  if (s.trim().length < 1) {
+    return;
+  }
+  const qs = parseQuery(s).map((token) => token.quote());
+  const u = document.getElementById('execute')!.getAttribute('raw-url') || '';
+  onNewTab(u, ...qs);
+};
+
+document
+  .getElementById('strict-search')!
+  .addEventListener('click', searchWithManualInputWords);
+
+document.getElementById('manual-input')!.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    searchWithManualInputWords();
+  }
+});

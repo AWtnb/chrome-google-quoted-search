@@ -14,7 +14,6 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.to !== 'contentScript') {
     return;
   }
-  console.log(msg);
 
   if (msg.type === 'request-current-query') {
     if (isSearchEngine(document.location.href)) {
