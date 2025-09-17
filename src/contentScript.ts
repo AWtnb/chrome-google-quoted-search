@@ -9,13 +9,27 @@ import {
   isSearchEngine,
 } from './helper';
 
-
 chrome.runtime.onMessage.addListener((msg: Message) => {
   if (msg.to !== 'contentScript') {
     return;
   }
 
   if (msg.type === 'request-current-query') {
+    const sel = window.getSelection();
+    if (sel) {
+      const s = sel.toString().trim();
+      if (0 < s.length) {
+        broadcast({
+          to: 'popup',
+          type: 'reply-current-selection',
+          payload: {
+            content: s,
+          },
+        });
+        return;
+      }
+    }
+
     if (isSearchEngine(document.location.href)) {
       broadcast({
         to: 'popup',
@@ -27,18 +41,6 @@ chrome.runtime.onMessage.addListener((msg: Message) => {
       return;
     }
 
-    const s = window.getSelection();
-    if (!s || s.toString().trim().length < 1) {
-      return;
-    }
-
-    broadcast({
-      to: 'popup',
-      type: 'reply-current-selection',
-      payload: {
-        content: s.toString(),
-      },
-    });
     return;
   }
 

@@ -8,7 +8,6 @@ import {
   onNewTab,
   Message,
   Token,
-  isSearchEngine,
 } from './helper';
 import { Remover } from './noise';
 
